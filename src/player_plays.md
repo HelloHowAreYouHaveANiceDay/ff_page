@@ -1,5 +1,4 @@
 ---
-theme: dashboard
 title: Player Plays
 toc: false
 ---

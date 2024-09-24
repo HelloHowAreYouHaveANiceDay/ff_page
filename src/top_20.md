@@ -1,5 +1,4 @@
 ---
-theme: dashboard
 title: Top 20
 toc: true
 ---
