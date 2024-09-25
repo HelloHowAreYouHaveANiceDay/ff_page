@@ -106,11 +106,14 @@ function topTwentyWR(data, { width })
                 "rec_yards",
                 "rush_fantasy_points",
                 "fantasy_points",
-                "fp_game_list"
+                "avg_target_share",
+                "fp_game_list",
+                "target_share_game_list"
             ],
             format: {
                 "fp_game_list": d => d.map(x => `${gamePointsIndicator(x)}`).join(""),
-                "fantasy_points": sparkbar(d3.max(data, d => d.fantasy_points))
+                "fantasy_points": sparkbar(d3.max(data, d => d.fantasy_points)),
+                "target_share_game_list": d => d.map(x => _.round(x, 2)),
             },
             align: {
                 "fp_game_list": "right"
