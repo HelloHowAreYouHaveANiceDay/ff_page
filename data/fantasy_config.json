@@ -1,0 +1,70 @@
+{
+    "ROSTER": {
+        "QB": 1,
+        "RB": 1,
+        "WR": 1,
+        "TE": 1,
+        "FLEX": 2,
+        "DST": 1,
+        "K": 1
+    },
+    "SCORING": {
+        "PASS_YDS": 0.04,
+        "PASS_TD": 4,
+        "PASS_2PT_CONV": 2,
+        "INT": -2,
+
+        "RUSH_YDS": 0.1,
+        "RUSH_TD": 6,
+        "RUSH_2PT_CONV": 2,
+        
+        "REC_YDS": 0.1,
+        "REC_EACH": 0.5,
+        "REC_TD": 6,
+        "REC_2PT_CONV": 2,
+
+        "PAT": 1,
+        "PAT_MISS": -1,
+        "FG_0_39": 3,
+        "FG_40_49": 4,
+        "FG_MISS_0_30": -1,
+        "FG_50-59": 5,
+        "FG_60_PLUS": 6,
+        
+        "DEF_KICKOFF_RET_TD": 8,
+        "DEF_PUNT_RET_TD": 8,
+        "DEF_INT_TD": 8,
+        "DEF_FUM_RET_TD": 8,
+        "DEF_BLK_RET_TD": 8,
+        "DEF_TW0PT_RET": 2,
+
+        "DEF_SACK": 1,
+        "DEF_BLOCK": 3,
+        "DEF_INT": 2,
+        "DEF_FR": 1,
+        "DEF_FF": 1,
+        "DEF_SAFETY": 4,
+        "DEF_STUFF": 0.5,
+        "DEF_PA_7_13": -1,
+        "DEF_PA_14_17": -2,
+        "DEF_PA_18_21": -3,
+        "DEF_PA_22_27": -4,
+        "DEF_PA_28_34": -5,
+        "DEF_PA_35_45": -6,
+        "DEF_PA_46_PLUS": -7,
+        "DEF_YA_300_349": -1,
+        "DEF_YA_350_399": -2,
+        "DEF_YA_400_449": -3,
+        "DEF_YA_450_499": -4,
+        "DEF_YA_500_549": -5,
+        "DEF_YA_550_PLUS": -6,
+
+        "KICKOFF_RET_TD": 6,
+        "PUNT_RET_TD": 6,
+        "FUM_REC_TD": 6,
+        "FUM_LOST": -2,
+        "FUM_RET_TD": 6,
+        "TWOPT_RET": 2,
+        "ONEPT_SAFETY": 1
+    }
+}
