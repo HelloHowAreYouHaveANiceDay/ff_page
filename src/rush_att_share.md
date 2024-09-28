@@ -1,15 +1,15 @@
 ---
-title: Target Share Week Over Week
+title: Rushing Share Week Over Week
 toc: true
 sql:
   player_game: ./data/game_player_2024.parquet
 ---
 
-# Week Over Week Target Share
+# Week Over Week Rush Share
 
-Shows week over week target share and pct target share change for players
+Shows week over week rushing share and pct rush share change for players
 
-Target share is calculated as # of targets / total # of targets for the team
+Target share is calculated as # of attempts / total # of attempts for the team
 
 ```js
 const color = Plot.scale({
@@ -28,7 +28,7 @@ function pct_bar() {
     x = Math.round(x * 100);
 
     return htl.html`<div style="
-        background: RGB(100,${x*2.3+50}, 50);
+        background: RGB(100,${x*1+50}, 50);
         color: white;*
         font: 10px/1.6 var(--sans-serif);
         display: block;
@@ -64,25 +64,25 @@ function pct_chg_bar() {
 ```js
 function wow_cols(week_num) {
     const wow = `${week_num}_wow`
-    const target_share = `${week_num}_target_share`
-    const target_rank = `${week_num}_target_rank`
+    const rush_share = `${week_num}_rush_share`
+    const rush_rank = `${week_num}_rush_rank`
 
     const configuration = {
         columns: [
             wow,
-            target_share
+            rush_share
         ],
         header: {
             [wow]: `${week_num}`,
-            [target_share]: "%",
+            [rush_share]: "%",
         },
         format: {
             [wow]: pct_chg_bar(),
-            [target_share]: pct_bar(),
+            [rush_share]: pct_bar(),
         },
         align: {
             [wow]: "right",
-            [target_share]: "center",
+            [rush_share]: "center",
         },
     }
 
@@ -118,17 +118,17 @@ Inputs.table(
         PIVOT (
                 SELECT 
                     *,
-                RANK() OVER (PARTITION BY pos_team, week ORDER BY target_share DESC) as target_rank,
-                target_share - LAG(target_share) OVER (PARTITION BY player_id ORDER BY week) AS wow,
+                RANK() OVER (PARTITION BY pos_team, week ORDER BY rush_share DESC) as rush_rank,
+                rush_share - LAG(rush_share) OVER (PARTITION BY player_id ORDER BY week) AS wow,
                 FROM 
                     player_game
                 WHERE
-                    position IN ('WR', 'TE', 'RB')
+                    position IN ('WR', 'TE', 'RB', 'QB')
         )
         ON week
         USING
-            FIRST(target_share) AS target_share, 
-            FIRST(target_rank) AS target_rank, 
+            FIRST(rush_share) AS rush_share, 
+            FIRST(rush_rank) AS rush_rank, 
             FIRST(wow) AS wow
         GROUP BY player_id, display_name, pos_team
     `,{
@@ -154,50 +154,3 @@ Inputs.table(
 
 
 ```
-
-```sql id=target_share_rank
-  PIVOT (
-            SELECT 
-            *,
-            RANK() OVER (PARTITION BY pos_team, week ORDER BY target_share DESC) as target_rank,
-            target_share - LAG(target_share) OVER (PARTITION BY player_id ORDER BY week) AS wow,
-            FROM 
-                player_game
-            WHERE target_share > .1
-        )
-        ON week
-        USING
-            FIRST(target_share) AS target_share, 
-            FIRST(target_rank) AS target_rank, 
-            FIRST(wow) AS wow
-        GROUP BY player_id, display_name, pos_team
-```
-
-
-<!-- 
-```sql id=target_share_rank display
-SELECT 
-    *,
-    RANK() OVER (PARTITION BY pos_team, week ORDER BY target_share DESC) as target_rank
-    -- week,
-    -- player_id,
-    -- target_share,
-FROM 
-player_game
-WHERE target_share > .1
-``` -->
-<!-- 
-```js
-Plot.plot({
-    marks: [
-        Plot.frame(),
-        Plot.line(target_share_rank, {
-            x: "week",
-            y: "target_rank",
-            fy: "pos_team",
-            z: "player_id",
-            stroke: "pos_team"
-        }),
-    ]
-})
-``` -->
