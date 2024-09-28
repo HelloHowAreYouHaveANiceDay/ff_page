@@ -152,5 +152,4 @@ Inputs.table(
     }
 )
 
-
 ```

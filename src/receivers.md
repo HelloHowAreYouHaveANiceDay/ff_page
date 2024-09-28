@@ -1,142 +1,119 @@
 ---
 title: Receivers
 toc: true
+sql:
+  game_player: ./data/game_player_2024.parquet
 ---
 
-```js
-import {sparkbar, gamePointsIndicator} from "./formatHelpers.js";
-```
 
-
-```js
-const payload = await FileAttachment("data/players.json").json();
-const data = payload.filter(d => d.position === "WR");
-
-const player_game_raw = await FileAttachment("data/plays.json").json();
-const player_game = player_game_raw.filter(d => d.position === "WR");
-```
-```js
-// get unique player names
-const cat = Array.from(new Set(player_game.map((d) => d.pos_team)));
-
-const color = Plot.scale({
-  color: {
-    type: "categorical",
-    domain: cat,
-    unknown: "var(--theme-foreground-muted)",
-  },
-});
+```sql id=game_player_q display
+  SELECT
+    player_id,
+    FIRST(player_name) as player_name,
+    FIRST(pos_team) as pos_team,
+    FIRST(position) as position,
+    COUNT(DISTINCT(game_id)) as games,
+    SUM(rec_yards) as rec_yards,
+    SUM(rec_tds) as rec_tds,
+    SUM(rec_completes) as rec_completes,
+    SUM(rec_targets) as rec_targets,
+    ROUND(100.0 * AVG(target_share),0) as target_share,
+    ROUND(100.0 * SUM(rec_completes) / SUM(rec_targets),0) as catch_rate,
+    SUM(rec_fp) as rec_fp,
+    RANK() OVER (PARTITION BY FIRST(position) ORDER BY SUM(fp) DESC) as pos_rank,
+    SUM(fp) as fp,
+  FROM game_player
+  WHERE rec_fp > 0 AND rec_targets > 5
+  GROUP BY player_id
 ```
 
 ```js
-function targetShare(data, { width }) {
+const receiver_tip = (d) => `
+${d.pos_team}|${d.position}|${d.player_name}\n
+T:${d.rec_targets}|C:${d.rec_completes}|Y:${d.rec_yards}\n
+CR:${d.catch_rate}%|TS:${d.target_share}%\n
+G:${d.games}|TD:${d.rec_tds}\n
+`
+
+const highlight_top_10 = x => is_top_10(x) ? "red" : "grey"
+
+const is_top_10 = (d) => d.position === 'WR' ? d.pos_rank <= 20 : false
+```
+
+```js
+function targets_fp_scatter(data, { width }) {
   return Plot.plot({
-    title: "Fantasy Points Week Over Week",
+    title: "Targets vs Rec Fantasy Points",
     width,
-    height: 300,
-    color: { ...color, legend: true },
+    color: {scheme: "BrBg"},
+    x: {label: "Rec FP"},
+    y: {label: "Targets"},
     marks: [
-        Plot.line(data, {
-            x: "week",
-            y: "target_share",
-            z: "player_id",
-            stroke: "pos_team"
-        }),
+    Plot.dot(data, {x: "rec_fp", y: "rec_targets", fill:highlight_top_10}),
+    Plot.linearRegressionY(data, {x: "rec_fp", y: "rec_targets", stroke: "red"}),
     Plot.tip(data, Plot.pointer({
-        x: "week",
-        y: "target_share",
-        title: d => `${d.player_name} \n (${d.game_id} - ${d.rec_targets} targets, ${d.fantasy_points} points)`,
+        x: "rec_fp",
+        y: "rec_targets",
+        title: receiver_tip,
       })),
-    Plot.dot(data.filter(d => d.target_share > .4), {
-        x: "week",
-        y: "target_share",
-        fill: 'pos_team',
-        radius: 3
-      }),
-    ],
+  ]
+  });
+}
+```
+
+
+```js
+function catches_yards_scatter(data, { width }) {
+  return Plot.plot({
+    title: "Completions vs Yards",
+    width,
+    color: {scheme: "BrBg"},
+    x: {label: "Yards"},
+    y: {label: "TDs"},
+    marks: [
+    Plot.dot(data, {x: "rec_yards", y: "rec_tds", fill:highlight_top_10}),
+    Plot.linearRegressionY(data, {x: "rec_yards", y: "rec_tds", stroke: "red"}),
+    Plot.tip(data, Plot.pointer({
+        x: "rec_yards",
+        y: "rec_tds",
+        title: receiver_tip,
+      })),
+  ]
   });
 }
 ```
 
 ```js
-function launchTimeline(data, { width }) {
+function target_share_catch_rate_scatter(data, { width }) {
   return Plot.plot({
-    title: "Fantasy Points Week Over Week",
+    title: "Opportunity Efficiency",
     width,
-    height: 300,
-    // color: { ...color, legend: true },
+    color: {scheme: "BrBg"},
+    x: {label: "Target Share"},
+    y: {label: "Catch Rate"},
     marks: [
-        Plot.line(data, {
-            x: "week",
-            y: "fantasy_points",
-            z: "player_id",
-            color: "pos_team"
-        }),
+    Plot.dot(data, {x: "target_share", y: "catch_rate", fill:highlight_top_10}),
+    Plot.linearRegressionY(data, {x: "target_share", y: "catch_rate", stroke: "red"}),
     Plot.tip(data, Plot.pointer({
-        x: "week",
-        y: "fantasy_points",
-        title: d => `${d.player_name} \n (${d.game_id} - ${d.rec_targets} targets, ${d.fantasy_points} points)`,
+        x: "target_share",
+        y: "catch_rate",
+        title: receiver_tip,
       })),
-    ],
+    Plot.ruleX([d3.median(data, x => x.target_share)], {stroke: "red"}),
+     Plot.ruleY([d3.median(data, x => x.catch_rate)], {stroke: "red"}),
+  ]
   });
 }
 ```
 
 <div class="grid grid-cols-2">
   <div class="card">
-    ${resize((width) => launchTimeline(player_game, {width}))}
+    ${resize((width) => targets_fp_scatter(game_player_q, {width}))}
   </div>
-   <div class="card">
-    ${resize((width) => targetShare(player_game, {width}))}
+  <div class="card">
+    ${resize((width) => catches_yards_scatter(game_player_q, {width}))}
   </div>
-</div>
-
-```js
-function topTwentyWR(data, { width })
-    {
-        return Inputs.table(data.sort((a, b) => b.fantasy_points - a.fantasy_points).slice(0, 40), {
-            columns: [
-                "pos_rank",
-                "position",
-                "player_name",
-                "rec_targets",
-                "rec_receptions",
-                "rec_td",
-                "rec_yards",
-                "rush_fantasy_points",
-                "fantasy_points",
-                "avg_target_share",
-                "fp_game_list",
-                "target_share_game_list"
-            ],
-            header: {
-                "pos_rank": "Rank",
-                "position": "Pos",
-                "player_name": "Player",
-                "rec_targets": "Tgt",
-                "rec_receptions": "Rec",
-                "rec_td": "TD",
-                "rec_yards": "Yds",
-                "rush_fantasy_points": "RuFP",
-                "fantasy_points": "FP",
-                "avg_target_share": "Tgt Share",
-                "fp_game_list": "FP/G",
-                "target_share_game_list": "Tgt Share/G"
-            },
-            format: {
-                "fp_game_list": d => d.map(x => `${gamePointsIndicator(x)}`).join(""),
-                "fantasy_points": sparkbar(d3.max(data, d => d.fantasy_points)),
-                "target_share_game_list": d => d.map(x => _.round(x, 2)),
-            },
-            align: {
-                "fp_game_list": "right"
-            },
-            rows:50
-        })
-    }
-```
-
-<div class="">
-    <p>Top 20 WR</p>
-   ${resize((width) => topTwentyWR(data, {width}))}
+  <div class="card">
+    ${resize((width) => target_share_catch_rate_scatter(game_player_q, {width}))}
+  </div>
 </div>
