@@ -47,7 +47,7 @@ def transform_pbp_raw_to_play_player(pbp_raw: pd.DataFrame) -> pd.DataFrame:
         ('player_id', 'receiver_player_id'),
         ('player_name', 'receiver_player_name'),
         ('rec_targets', 'pass_attempt'),
-        ('rec_completes', 'complete_pass'),
+        ('rec_receptions', 'complete_pass'),
         ('rec_yards', 'receiving_yards'),
         ('rec_tds', 'pass_touchdown'),
         ('rec_fumb_lost', lambda x: x["fumble"] if x["receiver_player_id"]

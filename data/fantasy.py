@@ -27,7 +27,7 @@ def calculate_rec_points(fantasy_config):
     def calculate_rec_points_with_config(row):
         points = 0
         points += row["rec_yards"] * fantasy_config["SCORING"]["REC_YDS"]
-        points += row["rec_completes"] * fantasy_config["SCORING"]["REC_EACH"]
+        points += row["rec_receptions"] * fantasy_config["SCORING"]["REC_EACH"]
         points += row["rec_tds"] * fantasy_config["SCORING"]["REC_TD"]
         points += row["rec_fumb_lost"] * fantasy_config["SCORING"]["FUM_LOST"]
         points += row["rec_2pt"] * fantasy_config["SCORING"]["REC_2PT_CONV"]
@@ -37,6 +37,21 @@ def calculate_rec_points(fantasy_config):
 
 
 def calculate_fantasy_points(fantasy_config, play_player):
+    pp = play_player.copy()
+
+    pp["pass_fp"] = pp.apply(
+        calculate_pass_points(fantasy_config), axis=1).fillna(0)
+    pp["rush_fp"] = pp.apply(
+        calculate_rush_points(fantasy_config), axis=1).fillna(0)
+    pp["rec_fp"] = pp.apply(
+        calculate_rec_points(fantasy_config), axis=1).fillna(0)
+    
+    pp["fp"] = pp["pass_fp"] + pp["rush_fp"] + pp["rec_fp"]
+
+    return pp.copy()
+
+
+def calculate_game_fantasy_points(fantasy_config, play_player):
     pp = play_player.copy()
 
     pp["pass_fp"] = pp.apply(

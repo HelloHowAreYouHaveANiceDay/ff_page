@@ -5,7 +5,7 @@ sql:
   player_game: ./data/game_player_2024.parquet
 ---
 
-# Week Over Week Target Share
+# Target Share Week Over Week
 
 Shows week over week target share and pct target share change for players
 
@@ -111,31 +111,47 @@ const allWeeks = allWeeksCols()
 console.log(allWeeks)
 ```
 
+```sql id=game_player_q
+PIVOT (
+        SELECT 
+            *,
+        RANK() OVER (PARTITION BY pos_team, week ORDER BY rec_target_share DESC) as target_rank,
+        rec_target_share - LAG(rec_target_share) OVER (PARTITION BY player_id ORDER BY week) AS wow,
+        FROM 
+            player_game
+        WHERE
+            position IN ('WR', 'TE', 'RB')
+)
+ON week
+USING
+    FIRST(rec_target_share) AS target_share, 
+    FIRST(target_rank) AS target_rank, 
+    FIRST(wow) AS wow
+GROUP BY player_id, player_display_name, pos_team
+```
+
+
+```sql id=game_player_weekly_q
+SELECT 
+    *,
+RANK() OVER (PARTITION BY pos_team, week ORDER BY rec_target_share DESC) as target_rank,
+rec_target_share - LAG(rec_target_share) OVER (PARTITION BY player_id ORDER BY week) AS wow,
+FROM 
+    player_game
+WHERE
+    position IN ('WR', 'TE', 'RB')
+    AND pos_team = 'ARI'
+
+```
+
 ```js
 
 Inputs.table(
-    sql`
-        PIVOT (
-                SELECT 
-                    *,
-                RANK() OVER (PARTITION BY pos_team, week ORDER BY target_share DESC) as target_rank,
-                target_share - LAG(target_share) OVER (PARTITION BY player_id ORDER BY week) AS wow,
-                FROM 
-                    player_game
-                WHERE
-                    position IN ('WR', 'TE', 'RB')
-        )
-        ON week
-        USING
-            FIRST(target_share) AS target_share, 
-            FIRST(target_rank) AS target_rank, 
-            FIRST(wow) AS wow
-        GROUP BY player_id, display_name, pos_team
-    `,{
+   game_player_q,{
         color: {scheme: "BuRd"},
         columns: [
             "pos_team",
-            "display_name",
+            "player_display_name",
             ...allWeeks.columns
         ],
         header: {
@@ -152,52 +168,40 @@ Inputs.table(
     }
 )
 
-
-```
-
-```sql id=target_share_rank
-  PIVOT (
-            SELECT 
-            *,
-            RANK() OVER (PARTITION BY pos_team, week ORDER BY target_share DESC) as target_rank,
-            target_share - LAG(target_share) OVER (PARTITION BY player_id ORDER BY week) AS wow,
-            FROM 
-                player_game
-            WHERE target_share > .1
-        )
-        ON week
-        USING
-            FIRST(target_share) AS target_share, 
-            FIRST(target_rank) AS target_rank, 
-            FIRST(wow) AS wow
-        GROUP BY player_id, display_name, pos_team
 ```
 
 
-<!-- 
-```sql id=target_share_rank display
-SELECT 
-    *,
-    RANK() OVER (PARTITION BY pos_team, week ORDER BY target_share DESC) as target_rank
-    -- week,
-    -- player_id,
-    -- target_share,
-FROM 
-player_game
-WHERE target_share > .1
-``` -->
-<!-- 
 ```js
-Plot.plot({
+function target_share_by_week(data, { width }) {
+  return Plot.plot({
+    title: "Targets vs. Fantasy Points",
+    width,
+    height: 300,
+    // y: {
+    //     type: 'log',
+    //     domain: [.1, .8],
+    //     grid: true
+    // },
     marks: [
-        Plot.frame(),
-        Plot.line(target_share_rank, {
-            x: "week",
-            y: "target_rank",
-            fy: "pos_team",
-            z: "player_id",
-            stroke: "pos_team"
-        }),
-    ]
-})
-``` -->
+      Plot.line(data, {
+        x: "week",
+        y: "target_rank",
+        stroke: "position",
+        opacity: 0.6,
+      }),
+      Plot.tip(data, Plot.pointer({
+        x: "week",
+        y: "target_rank",
+        title: d => `${d.player_name} \n (${d.week} - ${d.rec_targets} targets, ${d.fp} points)`,
+      })),
+      Plot.ruleY([0]),
+    ],
+  });
+}
+```
+
+<div class="grid grid-cols-1">
+  <div class="card">
+    ${resize((width) => target_share_by_week(game_player_weekly_q, {width}))}
+  </div>
+</div>

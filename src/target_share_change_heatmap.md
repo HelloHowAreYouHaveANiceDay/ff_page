@@ -25,7 +25,7 @@ function target_share_change_heatmap(data, { width }) {
       data,
       Plot.group(
         {fill: "median"},
-        {x: (d) => d.week, y: "display_name",fill: "wow", inset: 0.5, sort: 
+        {x: (d) => d.week, y: "player_display_name",fill: "wow", inset: 0.5, sort: 
         {y: "fill"}}
       )
     )

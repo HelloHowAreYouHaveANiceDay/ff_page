@@ -130,12 +130,12 @@ Inputs.table(
             FIRST(rush_share) AS rush_share, 
             FIRST(rush_rank) AS rush_rank, 
             FIRST(wow) AS wow
-        GROUP BY player_id, display_name, pos_team
+        GROUP BY player_id, player_display_name, pos_team
     `,{
         color: {scheme: "BuRd"},
         columns: [
             "pos_team",
-            "display_name",
+            "player_display_name",
             ...allWeeks.columns
         ],
         header: {

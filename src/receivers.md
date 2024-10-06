@@ -12,18 +12,19 @@ sql:
     FIRST(player_name) as player_name,
     FIRST(pos_team) as pos_team,
     FIRST(position) as position,
-    COUNT(DISTINCT(game_id)) as games,
+    COUNT(DISTINCT(week)) as games,
     SUM(rec_yards) as rec_yards,
     SUM(rec_tds) as rec_tds,
-    SUM(rec_completes) as rec_completes,
+    SUM(rec_receptions) as rec_receptions,
     SUM(rec_targets) as rec_targets,
-    ROUND(100.0 * AVG(target_share),0) as target_share,
-    ROUND(100.0 * SUM(rec_completes) / SUM(rec_targets),0) as catch_rate,
+    ROUND(100.0 * AVG(rec_target_share),0) as rec_target_share,
+    ROUND(100.0 * SUM(rec_receptions) / SUM(rec_targets),0) as catch_rate,
     SUM(rec_fp) as rec_fp,
     RANK() OVER (PARTITION BY FIRST(position) ORDER BY SUM(fp) DESC) as pos_rank,
     SUM(fp) as fp,
   FROM game_player
   WHERE rec_fp > 0 AND rec_targets > 5
+  AND position = 'WR'
   GROUP BY player_id
 ```
 

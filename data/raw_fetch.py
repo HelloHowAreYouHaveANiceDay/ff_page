@@ -86,7 +86,7 @@ def download_snap_counts(season):
     return filename
 
 
-def download_player_stats(season):
+def download_weekly_player_stats(season):
     """
     Downloads the player stats data for the given season.
 

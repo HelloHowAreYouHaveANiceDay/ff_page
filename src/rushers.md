@@ -12,27 +12,27 @@ sql:
     FIRST(player_name) as player_name,
     FIRST(pos_team) as pos_team,
     FIRST(position) as position,
-    COUNT(DISTINCT(game_id)) as games,
+    COUNT(DISTINCT(week)) as games,
     SUM(rush_yards) as rush_yards,
     ROUND(AVG(rush_yards),0) as avg_rush_yards,
     SUM(rush_tds) as rush_tds,
     SUM(rec_tds) as rec_tds,
-    SUM(rush_attempts) as rush_attempts,
-    ROUND(SUM(rush_yards) / SUM(rush_attempts),0) as ypc,
+    SUM(carries) as carries,
+    ROUND(SUM(rush_yards) / SUM(carries), 2) as ypc,
     ROUND(100.0 * AVG(rush_share),0) as rush_share,
     SUM(fp) as fp,
     STDDEV(fp) as fp_var,
     SUM(rush_fp) as rush_fp,
     RANK() OVER (PARTITION BY FIRST(position) ORDER BY SUM(fp) DESC) as pos_rank
   FROM game_player
-  WHERE rush_fp > 0 AND rush_attempts > 5
+  WHERE rush_fp > 0 AND carries > 5
   GROUP BY 1
 ```
 
 ```js
 const rusher_tip = (d) => `
 ${d.pos_team}|${d.position}|${d.player_name}\n
-A:${d.rush_attempts}|Y:${d.rush_yards}\n
+A:${d.carries}|Y:${d.rush_yards}\n
 YPC: ${d.ypc}|YPG:${d.avg_rush_yards}|%:${d.rush_share}\n
 G:${d.games}|TD:${d.rush_tds + d.rec_tds}\n
 `
@@ -51,11 +51,11 @@ function targets_fp_scatter(data, { width }) {
     x: {label: "fp"},
     y: {label: "attempts"},
     marks: [
-    Plot.dot(data, {x: "rush_fp", y: "rush_attempts", fill: highlight_top_10}),
-    Plot.linearRegressionY(data, {x: "rush_fp", y: "rush_attempts", stroke: "red"}),
+    Plot.dot(data, {x: "rush_fp", y: "carries", fill: highlight_top_10}),
+    Plot.linearRegressionY(data, {x: "rush_fp", y: "carries", stroke: "red"}),
     Plot.tip(data, Plot.pointer({
         x: "rush_fp",
-        y: "rush_attempts",
+        y: "carries",
         title: rusher_tip,
       })),
   ]
