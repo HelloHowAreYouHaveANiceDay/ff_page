@@ -177,21 +177,21 @@ function target_share_by_week(data, { width }) {
     title: "Targets vs. Fantasy Points",
     width,
     height: 300,
-    // y: {
-    //     type: 'log',
-    //     domain: [.1, .8],
-    //     grid: true
-    // },
+    y: {
+        type: 'log',
+        domain: [.1, .8],
+        grid: true
+    },
     marks: [
       Plot.line(data, {
         x: "week",
-        y: "target_rank",
+        y: "rec_target_share",
         stroke: "position",
         opacity: 0.6,
       }),
       Plot.tip(data, Plot.pointer({
         x: "week",
-        y: "target_rank",
+        y: "rec_target_share",
         title: d => `${d.player_name} \n (${d.week} - ${d.rec_targets} targets, ${d.fp} points)`,
       })),
       Plot.ruleY([0]),
